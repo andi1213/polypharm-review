@@ -60,6 +60,10 @@ export default function ArchivePage() {
               <ReviewReport
                 professionalReport={selected.professionalReport}
                 patientReport={selected.patientReport}
+                beers={[]}
+                stopp={[]}
+                start={[]}
+                fdaSummaries={[]}
               />
             ) : (
               <p className="text-gray-400 text-center py-12">검토 기록을 선택하세요</p>
