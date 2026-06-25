@@ -7,20 +7,23 @@ interface Props {
   onChange: (drugs: Drug[]) => void;
 }
 
-interface SearchResult {
-  brandName: string;
-  genericName: string;
-  manufacturer: string;
-  purpose: string;
-  dosage: string;
-  warnings: string;
+interface KoreanDrugResult {
+  itemName: string;
+  entpName: string;
+  efcyQesitm: string;
+  useMethodQesitm: string;
+  atpnQesitm: string;
+  intrcQesitm: string;
+  seQesitm: string;
+  itemImage: string;
 }
 
 export default function DrugTable({ drugs, onChange }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchResults, setSearchResults] = useState<KoreanDrugResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [searchError, setSearchError] = useState("");
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const addDrug = () => {
@@ -42,11 +45,14 @@ export default function DrugTable({ drugs, onChange }: Props) {
       return;
     }
     setSearching(true);
+    setSearchError("");
     try {
       const res = await fetch(`/api/search-drug?query=${encodeURIComponent(query)}`);
       const data = await res.json();
+      if (data.error) setSearchError(data.error);
       setSearchResults(data.results || []);
     } catch {
+      setSearchError("검색 중 오류 발생");
       setSearchResults([]);
     } finally {
       setSearching(false);
@@ -59,15 +65,25 @@ export default function DrugTable({ drugs, onChange }: Props) {
     searchTimeout.current = setTimeout(() => searchDrug(value), 600);
   };
 
-  const addFromSearch = (result: SearchResult) => {
+  const extractIngredient = (itemName: string): string => {
+    const match = itemName.match(/\(([^)]+)\)/);
+    if (match) return match[1];
+    const parts = itemName.replace(/정|캡슐|시럽|주사|현탁액|과립|산|액|크림|연고|겔/g, "").trim();
+    return parts;
+  };
+
+  const addFromSearch = (result: KoreanDrugResult) => {
+    const dosageMatch = result.useMethodQesitm.match(/(\d+\s*(mg|g|ml|정|캡슐|포))/i);
+    const freqMatch = result.useMethodQesitm.match(/(1일\s*\d+회[^.]*)/);
+
     onChange([
       ...drugs,
       {
         id: crypto.randomUUID(),
-        name: result.brandName,
-        ingredient: result.genericName,
-        dosage: "",
-        frequency: result.dosage?.slice(0, 50) || "",
+        name: result.itemName,
+        ingredient: extractIngredient(result.itemName),
+        dosage: dosageMatch?.[0] || "",
+        frequency: freqMatch?.[0] || "",
         duration: "",
       },
     ]);
@@ -82,7 +98,7 @@ export default function DrugTable({ drugs, onChange }: Props) {
             onClick={() => setShowSearch(!showSearch)}
             className="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700"
           >
-            🔍 약물 검색
+            🔍 약물 검색 (약학정보원)
           </button>
           <button onClick={addDrug} className="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700">
             + 수동 추가
@@ -94,13 +110,14 @@ export default function DrugTable({ drugs, onChange }: Props) {
         <div className="mb-4 p-4 bg-gray-50 rounded-lg">
           <input
             className="w-full border rounded px-3 py-2 text-sm mb-2"
-            placeholder="약품명 또는 성분명 입력 (한글/영문 모두 가능)"
+            placeholder="제품명 입력 (예: 타이레놀, 아스피린, 리피토)"
             value={searchQuery}
             onChange={(e) => handleSearchInput(e.target.value)}
           />
-          {searching && <p className="text-sm text-blue-600 animate-pulse">검색 중... (OpenFDA 조회 + 한글 번역)</p>}
+          {searching && <p className="text-sm text-blue-600 animate-pulse">약학정보원 검색 중...</p>}
+          {searchError && <p className="text-sm text-red-500">{searchError}</p>}
           {searchResults.length > 0 && (
-            <div className="max-h-64 overflow-y-auto border rounded bg-white">
+            <div className="max-h-72 overflow-y-auto border rounded bg-white">
               {searchResults.map((r, i) => (
                 <div
                   key={i}
@@ -109,10 +126,18 @@ export default function DrugTable({ drugs, onChange }: Props) {
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <p className="text-sm font-medium">{r.brandName}</p>
-                      <p className="text-xs text-gray-600">성분: {r.genericName}</p>
-                      {r.purpose && <p className="text-xs text-gray-500 mt-1">효능: {r.purpose.slice(0, 80)}</p>}
-                      {r.manufacturer && <p className="text-xs text-gray-400">{r.manufacturer}</p>}
+                      <div className="flex items-center gap-2">
+                        {r.itemImage && (
+                          <img src={r.itemImage} alt="" className="w-10 h-10 object-contain rounded" />
+                        )}
+                        <div>
+                          <p className="text-sm font-medium">{r.itemName}</p>
+                          <p className="text-xs text-gray-500">{r.entpName}</p>
+                        </div>
+                      </div>
+                      {r.efcyQesitm && (
+                        <p className="text-xs text-gray-600 mt-1">{r.efcyQesitm.slice(0, 100)}</p>
+                      )}
                     </div>
                     <span className="text-xs text-blue-600 whitespace-nowrap ml-2">+ 추가</span>
                   </div>
@@ -120,8 +145,8 @@ export default function DrugTable({ drugs, onChange }: Props) {
               ))}
             </div>
           )}
-          {!searching && searchQuery.length >= 2 && searchResults.length === 0 && (
-            <p className="text-sm text-gray-400">검색 결과 없음 — 영문 약품명/성분명으로도 시도해보세요</p>
+          {!searching && !searchError && searchQuery.length >= 2 && searchResults.length === 0 && (
+            <p className="text-sm text-gray-400">검색 결과 없음</p>
           )}
         </div>
       )}
