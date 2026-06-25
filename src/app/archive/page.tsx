@@ -37,9 +37,9 @@ export default function ArchivePage() {
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-medium">{r.patient.name || "이름 없음"}</p>
+                    <p className="font-medium">{r.patient.age}세 ({r.patient.gender === "male" ? "남" : "여"})</p>
                     <p className="text-sm text-gray-500">
-                      {r.patient.age}세 / {r.drugs.length}개 약물
+                      {r.drugs.length}개 약물
                     </p>
                     <p className="text-xs text-gray-400">
                       {new Date(r.date).toLocaleDateString("ko-KR")}

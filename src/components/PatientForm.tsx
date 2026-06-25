@@ -15,14 +15,6 @@ export default function PatientForm({ patient, onChange }: Props) {
       <h2 className="text-lg font-semibold">환자 정보</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-1">이름</label>
-          <input
-            className="w-full border rounded px-3 py-2"
-            value={patient.name}
-            onChange={(e) => update("name", e.target.value)}
-          />
-        </div>
-        <div>
           <label className="block text-sm font-medium mb-1">나이</label>
           <input
             type="number"
@@ -51,7 +43,7 @@ export default function PatientForm({ patient, onChange }: Props) {
             onChange={(e) => update("symptoms", e.target.value)}
           />
         </div>
-        <div className="md:col-span-2">
+        <div>
           <label className="block text-sm font-medium mb-1">기저질환</label>
           <input
             className="w-full border rounded px-3 py-2"

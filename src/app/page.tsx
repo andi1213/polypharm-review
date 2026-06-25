@@ -10,7 +10,6 @@ import { saveReview } from "@/lib/store";
 
 export default function Home() {
   const [patient, setPatient] = useState<PatientInfo>({
-    name: "",
     age: 0,
     gender: "male",
     symptoms: "",
