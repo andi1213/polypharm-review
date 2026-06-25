@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Drug } from "@/lib/types";
 
 interface Props {
@@ -8,15 +8,16 @@ interface Props {
 }
 
 interface SearchResult {
-  itemName: string;
-  entpName: string;
-  efcyQesitm: string;
-  useMethodQesitm: string;
+  brandName: string;
+  genericName: string;
+  manufacturer: string;
+  purpose: string;
+  dosage: string;
+  warnings: string;
 }
 
 export default function DrugTable({ drugs, onChange }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchBy, setSearchBy] = useState<"name" | "ingredient">("name");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -42,7 +43,7 @@ export default function DrugTable({ drugs, onChange }: Props) {
     }
     setSearching(true);
     try {
-      const res = await fetch(`/api/search-drug?query=${encodeURIComponent(query)}&searchBy=${searchBy}`);
+      const res = await fetch(`/api/search-drug?query=${encodeURIComponent(query)}`);
       const data = await res.json();
       setSearchResults(data.results || []);
     } catch {
@@ -55,7 +56,7 @@ export default function DrugTable({ drugs, onChange }: Props) {
   const handleSearchInput = (value: string) => {
     setSearchQuery(value);
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
-    searchTimeout.current = setTimeout(() => searchDrug(value), 500);
+    searchTimeout.current = setTimeout(() => searchDrug(value), 600);
   };
 
   const addFromSearch = (result: SearchResult) => {
@@ -63,10 +64,10 @@ export default function DrugTable({ drugs, onChange }: Props) {
       ...drugs,
       {
         id: crypto.randomUUID(),
-        name: result.itemName,
-        ingredient: "",
+        name: result.brandName,
+        ingredient: result.genericName,
         dosage: "",
-        frequency: result.useMethodQesitm?.slice(0, 50) || "",
+        frequency: result.dosage?.slice(0, 50) || "",
         duration: "",
       },
     ]);
@@ -91,42 +92,36 @@ export default function DrugTable({ drugs, onChange }: Props) {
 
       {showSearch && (
         <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-          <div className="flex gap-2 mb-2">
-            <select
-              value={searchBy}
-              onChange={(e) => setSearchBy(e.target.value as "name" | "ingredient")}
-              className="border rounded px-3 py-2 text-sm"
-            >
-              <option value="name">약품명으로 검색</option>
-              <option value="ingredient">성분명으로 검색</option>
-            </select>
-            <input
-              className="flex-1 border rounded px-3 py-2 text-sm"
-              placeholder={searchBy === "name" ? "약품명 입력 (예: 타이레놀)" : "성분명 입력 (예: 아세트아미노펜)"}
-              value={searchQuery}
-              onChange={(e) => handleSearchInput(e.target.value)}
-            />
-          </div>
-          {searching && <p className="text-sm text-blue-600 animate-pulse">검색 중...</p>}
+          <input
+            className="w-full border rounded px-3 py-2 text-sm mb-2"
+            placeholder="약품명 또는 성분명 입력 (한글/영문 모두 가능)"
+            value={searchQuery}
+            onChange={(e) => handleSearchInput(e.target.value)}
+          />
+          {searching && <p className="text-sm text-blue-600 animate-pulse">검색 중... (OpenFDA 조회 + 한글 번역)</p>}
           {searchResults.length > 0 && (
-            <div className="max-h-48 overflow-y-auto border rounded">
+            <div className="max-h-64 overflow-y-auto border rounded bg-white">
               {searchResults.map((r, i) => (
                 <div
                   key={i}
-                  className="flex justify-between items-center px-3 py-2 hover:bg-blue-50 cursor-pointer border-b last:border-b-0"
+                  className="px-3 py-3 hover:bg-blue-50 cursor-pointer border-b last:border-b-0"
                   onClick={() => addFromSearch(r)}
                 >
-                  <div>
-                    <p className="text-sm font-medium">{r.itemName}</p>
-                    <p className="text-xs text-gray-500">{r.entpName}</p>
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{r.brandName}</p>
+                      <p className="text-xs text-gray-600">성분: {r.genericName}</p>
+                      {r.purpose && <p className="text-xs text-gray-500 mt-1">효능: {r.purpose.slice(0, 80)}</p>}
+                      {r.manufacturer && <p className="text-xs text-gray-400">{r.manufacturer}</p>}
+                    </div>
+                    <span className="text-xs text-blue-600 whitespace-nowrap ml-2">+ 추가</span>
                   </div>
-                  <span className="text-xs text-blue-600">+ 추가</span>
                 </div>
               ))}
             </div>
           )}
           {!searching && searchQuery.length >= 2 && searchResults.length === 0 && (
-            <p className="text-sm text-gray-400">검색 결과 없음</p>
+            <p className="text-sm text-gray-400">검색 결과 없음 — 영문 약품명/성분명으로도 시도해보세요</p>
           )}
         </div>
       )}
