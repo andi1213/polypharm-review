@@ -36,8 +36,27 @@ export default function ReviewReport({ professionalReport, patientReport }: Prop
           🖨 인쇄
         </button>
       </div>
-      <div className="prose prose-sm max-w-none whitespace-pre-wrap">
+
+      <div className="mb-3 flex items-center gap-2">
+        <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">AI 참고의견</span>
+        <span className="text-xs text-gray-400">아래 리포트는 GPT-4o가 검증된 데이터를 기반으로 생성한 분석입니다</span>
+      </div>
+      <div className="text-xs text-gray-400 mb-3">
+        🟢 높음 = 검증 데이터 기반 &nbsp; 🟡 중간 = 일반 약학 지식 &nbsp; 🔴 낮음 = 추가 확인 필요
+      </div>
+
+      <div className="prose prose-sm max-w-none whitespace-pre-wrap border-t pt-4">
         {tab === "professional" ? professionalReport : patientReport}
+      </div>
+
+      <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+        <p className="font-semibold mb-1">⚠️ 의료 면책 고지</p>
+        <p>
+          이 리포트는 AI 기반 참고자료이며, 의료 행위나 처방을 대체하지 않습니다.
+          Beers Criteria(AGS 2023), STOPP/START v2(2015), FDA 약물 라벨 데이터를 기반으로 생성되었으나,
+          개별 환자의 임상 상황에 따라 다를 수 있습니다.
+          최종 판단은 반드시 담당 의사·약사와 상의하세요.
+        </p>
       </div>
     </div>
   );
