@@ -114,7 +114,7 @@ export default function DrugTable({ drugs, onChange }: Props) {
             value={searchQuery}
             onChange={(e) => handleSearchInput(e.target.value)}
           />
-          {searching && <p className="text-sm text-blue-600 animate-pulse">약학정보원 검색 중...</p>}
+          {searching && <p className="text-sm text-blue-600 animate-pulse">검색 중... (약학정보원 → 의약품안전나라 → AI 순서)</p>}
           {searchError && <p className="text-sm text-red-500">{searchError}</p>}
           {searchResults.length > 0 && (
             <div className="max-h-72 overflow-y-auto border rounded bg-white">
@@ -132,7 +132,17 @@ export default function DrugTable({ drugs, onChange }: Props) {
                         )}
                         <div>
                           <p className="text-sm font-medium">{r.itemName}</p>
-                          <p className="text-xs text-gray-500">{r.entpName}</p>
+                          <p className="text-xs text-gray-500">
+                            {r.entpName}
+                            {(r as any).etcOtcCode && (
+                              <span className={`ml-1 px-1.5 py-0.5 rounded text-xs ${(r as any).etcOtcCode === "전문의약품" ? "bg-purple-100 text-purple-700" : "bg-green-100 text-green-700"}`}>
+                                {(r as any).etcOtcCode}
+                              </span>
+                            )}
+                            {(r as any).source && (
+                              <span className="ml-1 text-xs text-gray-400">[{(r as any).source}]</span>
+                            )}
+                          </p>
                         </div>
                       </div>
                       {r.efcyQesitm && (
